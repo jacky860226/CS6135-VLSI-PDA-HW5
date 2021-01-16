@@ -19,6 +19,11 @@ int main(int argc, char *argv[]) {
   Router::Dijkstra dijkstraRouter(context);
   dijkstraRouter.route();
   std::cout << context.overflow() << '\n';
+  for (int i = 0; i < 10; ++i) {
+    if (dijkstraRouter.ripup_reroute())
+      break;
+    std::cout << context.overflow() << '\n';
+  }
 
   context.output(argv[2]);
 

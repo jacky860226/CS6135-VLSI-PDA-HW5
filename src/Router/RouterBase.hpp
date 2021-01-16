@@ -10,5 +10,6 @@ protected:
 public:
   RouterBase(RouterContext &C) : context(C), globalGrid(C.getGlobalGrid()) {}
   virtual void route() = 0;
+  virtual bool ripup_reroute() = 0;
 };
 }; // namespace Router

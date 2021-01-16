@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <queue>
 #include <random>
+#include <unordered_set>
 #include <vector>
 
 namespace Router {
@@ -80,6 +81,36 @@ public:
       context.addRouteDemand(netRoute, 1);
       context.addRouteNet(net, netRoute);
     }
+  }
+  bool ripup_reroute() override {
+    std::vector<int> overflowEdges;
+    int edgeSize = context.getEdgeManager().getEdgeSize();
+    for (int eid = 0; eid < edgeSize; ++eid) {
+      if (context.overflow(eid)) {
+        overflowEdges.emplace_back(eid);
+        break;
+      }
+    }
+    if (overflowEdges.empty())
+      return true;
+    for (auto eid : overflowEdges) {
+      auto &overflowNets = context.getRouteNet(eid);
+      std::vector<const Net *> overflowNetsV(overflowNets.begin(),
+                                             overflowNets.end());
+      for (auto net : overflowNetsV) {
+        auto &netRoute = context.getNetRoute(net);
+        context.addRouteDemand(netRoute, -1);
+        context.removeRouteNet(net, netRoute);
+      }
+      std::sort(overflowNetsV.begin(), overflowNetsV.end(), cmp);
+      for (auto net : overflowNetsV) {
+        auto &netRoute = context.getNetRoute(net);
+        netRoute = std::move(run(net));
+        context.addRouteDemand(netRoute, 1);
+        context.addRouteNet(net, netRoute);
+      }
+    }
+    return false;
   }
 };
 }; // namespace Router

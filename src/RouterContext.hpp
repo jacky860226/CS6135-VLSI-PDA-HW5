@@ -56,6 +56,9 @@ public:
       routeNets.at(eid).erase(net);
     }
   }
+  const std::unordered_set<const Net *> &getRouteNet(int eid) const {
+    return routeNets.at(eid);
+  }
   std::vector<int> &getNetRoute(const Net *net) { return routes.at(net); }
   EdgeManager &getEdgeManager() { return edgeManager; }
   void output(std::string outputPath) {
