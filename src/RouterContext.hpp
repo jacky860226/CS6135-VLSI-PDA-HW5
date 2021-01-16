@@ -1,5 +1,6 @@
 #pragma once
 #include "EdgeManager.hpp"
+#include "GlobalTimer.hpp"
 #include "Input.hpp"
 #include <fstream>
 #include <unordered_map>
@@ -20,6 +21,7 @@ public:
     for (const auto &ptr : globalGrid->Nets) {
       routes[ptr.get()].clear();
     }
+    std::cout << GlobalTimer::getDuration<>().count() / 1e9 << '\n';
   }
   const GlobalGrid *getGlobalGrid() const { return globalGrid; }
   int overflow(int eid) const { return std::max(-remain(eid), 0); }

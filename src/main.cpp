@@ -1,6 +1,6 @@
 #include "GlobalTimer.hpp"
 #include "Parser.hpp"
-#include "Router/SPFA.hpp"
+#include "Router/Dijkstra.hpp"
 #include "RouterContext.hpp"
 #include <iostream>
 
@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
   Parser parser;
   auto globalGrid = parser.parse(argv[1]);
   RouterContext context(globalGrid.get());
-  Router::SPFA spfaRouter(context);
-  spfaRouter.route();
+  Router::Dijkstra dijkstraRouter(context);
+  dijkstraRouter.route();
   std::cout << context.overflow() << '\n';
 
   context.output(argv[2]);
