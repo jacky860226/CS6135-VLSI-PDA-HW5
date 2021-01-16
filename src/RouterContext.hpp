@@ -1,83 +1,70 @@
 #pragma once
-#include "EdgeIndexer.hpp"
+#include "EdgeManager.hpp"
 #include "Input.hpp"
 #include <fstream>
 #include <unordered_map>
 #include <unordered_set>
 
-class DemandManager : public EdgeIndexer<int> {
-  const GlobalGrid *globalGrid;
-
-public:
-  DemandManager(const GlobalGrid *globalGrid)
-      : EdgeIndexer<int>(globalGrid->GridH, globalGrid->GridV),
-        globalGrid(globalGrid) {}
-  int overflow() const {
-    int ans = 0;
-    for (int e : edge[0]) {
-      ans += std::max(e - globalGrid->CapacityH, 0);
-    }
-    for (int e : edge[1]) {
-      ans += std::max(e - globalGrid->CapacityV, 0);
-    }
-    return ans;
-  }
-};
-
 class RouterContext {
   const GlobalGrid *globalGrid;
-  DemandManager demand;
-  EdgeIndexer<std::unordered_set<const Net *>> routeNets;
-  std::unordered_map<const Net *, std::vector<Edge>> routes;
+  EdgeManager edgeManager;
+  std::vector<int> demand;
+  std::vector<std::unordered_set<const Net *>> routeNets;
+  std::unordered_map<const Net *, std::vector<int>> routes;
 
 public:
   RouterContext(const GlobalGrid *globalGrid)
-      : globalGrid(globalGrid), demand(globalGrid),
-        routeNets(globalGrid->GridH, globalGrid->GridV) {
+      : globalGrid(globalGrid), edgeManager(globalGrid),
+        demand(edgeManager.getEdgeSize()),
+        routeNets(edgeManager.getEdgeSize()) {
     for (const auto &ptr : globalGrid->Nets) {
       routes[ptr.get()].clear();
     }
   }
   const GlobalGrid *getGlobalGrid() const { return globalGrid; }
-  int overflow(const Edge &e) const {
-    return std::max(-remain(e), 0);
-    assert(false && "error edge!!");
-  }
-  int remain(const Edge &e) const {
-    char dir = e.getDirection();
+  int overflow(int eid) const { return std::max(-remain(eid), 0); }
+  int remain(int eid) const {
+    char dir = edgeManager.getIdEdge(eid).getDirection();
     if (dir == 'H')
-      return globalGrid->CapacityH - demand.at(e);
+      return globalGrid->CapacityH - demand[eid];
     if (dir == 'V')
-      return globalGrid->CapacityV - demand.at(e);
+      return globalGrid->CapacityV - demand[eid];
     assert(false && "error edge!!");
   }
-  int getEdgeDemand(const Edge &e) const { return demand.at(e); }
-  int overflow() const { return demand.overflow(); }
-  void addRouteDemand(const std::vector<Edge> &route, int d) {
-    for (const auto &edge : route) {
-      demand.at(edge) += d;
+  int getEdgeDemand(int eid) const { return demand[eid]; }
+  int overflow() const {
+    int ans = 0;
+    for (size_t i = 0; i < demand.size(); ++i)
+      ans += overflow(i);
+    return ans;
+  }
+  void addRouteDemand(const std::vector<int> &route, int d) {
+    for (const auto &eid : route) {
+      demand.at(eid) += d;
     }
   }
-  void addEdgeDemand(const Edge &edge, int d) { demand.at(edge) += d; }
-  void addRouteNet(const Net *net, const std::vector<Edge> &route) {
-    for (const auto &edge : route) {
-      routeNets.at(edge).emplace(net);
+  void addEdgeDemand(int eid, int d) { demand.at(eid) += d; }
+  void addRouteNet(const Net *net, const std::vector<int> &route) {
+    for (const auto &eid : route) {
+      routeNets.at(eid).emplace(net);
     }
   }
-  void removeRouteNet(const Net *net, const std::vector<Edge> &route) {
-    for (const auto &edge : route) {
-      routeNets.at(edge).erase(net);
+  void removeRouteNet(const Net *net, const std::vector<int> &route) {
+    for (const auto &eid : route) {
+      routeNets.at(eid).erase(net);
     }
   }
-  std::vector<Edge> &getNetRoute(const Net *net) { return routes.at(net); }
-
+  std::vector<int> &getNetRoute(const Net *net) { return routes.at(net); }
+  EdgeManager &getEdgeManager() { return edgeManager; }
   void output(std::string outputPath) {
     std::ofstream fout(outputPath);
     for (const auto &net : globalGrid->Nets) {
       fout << net->name << ' ' << net->id << '\n';
-      for (const auto &e : routes.at(net.get())) {
-        fout << "(" << e.first.h << ", " << e.first.v << ", 1)-(" << e.second.h
-             << ", " << e.second.v << ", 1)\n";
+      for (const auto &eid : routes.at(net.get())) {
+        fout << "(" << edgeManager.getIdEdge(eid).first.h << ", "
+             << edgeManager.getIdEdge(eid).first.v << ", 1)-("
+             << edgeManager.getIdEdge(eid).second.h << ", "
+             << edgeManager.getIdEdge(eid).second.v << ", 1)\n";
       }
       fout << "!\n";
     }
