@@ -1,0 +1,6 @@
+.vscode
+hw5
+*.d
+*.o
+*.png
+*.result
