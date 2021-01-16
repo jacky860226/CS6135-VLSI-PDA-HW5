@@ -2,24 +2,23 @@
 #include "RouterBase.hpp"
 #include <algorithm>
 #include <queue>
+#include <random>
 #include <vector>
 
 namespace Router {
 class SPFA : public RouterBase {
-  std::vector<int> dist;
+  std::vector<long long> dist;
   std::vector<int> pa;
   std::vector<bool> inQueue;
 
   static bool cmp(const Net *a, const Net *b) { return a->HPWL() < b->HPWL(); }
   int overflowCost(const Point &pu, const Point &pv) {
-    context.addEdgeDemand(Edge(pu, pv), 1);
-    int ans = context.overflow(Edge(pu, pv));
-    context.addEdgeDemand(Edge(pu, pv), -1);
-    return ans;
+    int ans = context.remain(Edge(pu, pv)) - 1;
+    return std::max(-ans, 0);
   }
   std::vector<Edge> run(const Net *net) {
     static Point dir[] = {Point(0, 1), Point(0, -1), Point(1, 0), Point(-1, 0)};
-    std::fill(dist.begin(), dist.end(), 0x3f3f3f3f);
+    std::fill(dist.begin(), dist.end(), 0x3f3f3f3f3f3f3f3f);
     std::fill(pa.begin(), pa.end(), -1);
     std::fill(inQueue.begin(), inQueue.end(), false);
     int source = globalGrid->toIndex(net->pins[0]);
@@ -38,8 +37,12 @@ class SPFA : public RouterBase {
         if (!globalGrid->inRange(pv))
           continue;
         int v = globalGrid->toIndex(pv);
-        if (dist[v] > dist[u] + 1 + overflowCost(pu, pv) * 10) {
-          dist[v] = dist[u] + 1 + overflowCost(pu, pv) * 10;
+        long long cost = dist[u] + 1;
+        cost += overflowCost(pu, pv) * 7122LL;
+        long long edgeDemand = context.getEdgeDemand(Edge(pu, pv));
+        cost += edgeDemand * edgeDemand / 2;
+        if (dist[v] > cost) {
+          dist[v] = cost;
           pa[v] = u;
           if (!inQueue[v]) {
             q.emplace(v);
@@ -67,6 +70,8 @@ public:
     for (auto &net : globalGrid->Nets) {
       nets.emplace_back(net.get());
     }
+    std::mt19937 MT(7122);
+    std::shuffle(nets.begin(), nets.end(), MT);
     std::sort(nets.begin(), nets.end(), cmp);
     for (auto net : nets) {
       auto &netRoute = context.getNetRoute(net);

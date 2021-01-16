@@ -40,13 +40,18 @@ public:
   }
   const GlobalGrid *getGlobalGrid() const { return globalGrid; }
   int overflow(const Edge &e) const {
-    char dir = e.getDirection();
-    if (dir == 'H')
-      return std::max(demand.at(e) - globalGrid->CapacityH, 0);
-    if (dir == 'V')
-      return std::max(demand.at(e) - globalGrid->CapacityV, 0);
+    return std::max(-remain(e), 0);
     assert(false && "error edge!!");
   }
+  int remain(const Edge &e) const {
+    char dir = e.getDirection();
+    if (dir == 'H')
+      return globalGrid->CapacityH - demand.at(e);
+    if (dir == 'V')
+      return globalGrid->CapacityV - demand.at(e);
+    assert(false && "error edge!!");
+  }
+  int getEdgeDemand(const Edge &e) const { return demand.at(e); }
   int overflow() const { return demand.overflow(); }
   void addRouteDemand(const std::vector<Edge> &route, int d) {
     for (const auto &edge : route) {
