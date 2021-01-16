@@ -45,6 +45,7 @@ public:
       return std::max(demand.at(e) - globalGrid->CapacityH, 0);
     if (dir == 'V')
       return std::max(demand.at(e) - globalGrid->CapacityV, 0);
+    assert(false && "error edge!!");
   }
   int overflow() const { return demand.overflow(); }
   void addRouteDemand(const std::vector<Edge> &route, int d) {
@@ -52,6 +53,7 @@ public:
       demand.at(edge) += d;
     }
   }
+  void addEdgeDemand(const Edge &edge, int d) { demand.at(edge) += d; }
   void addRouteNet(const Net *net, const std::vector<Edge> &route) {
     for (const auto &edge : route) {
       routeNets.at(edge).emplace(net);

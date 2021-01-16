@@ -11,6 +11,12 @@ class SPFA : public RouterBase {
   std::vector<bool> inQueue;
 
   static bool cmp(const Net *a, const Net *b) { return a->HPWL() < b->HPWL(); }
+  int overflowCost(const Point &pu, const Point &pv) {
+    context.addEdgeDemand(Edge(pu, pv), 1);
+    int ans = context.overflow(Edge(pu, pv));
+    context.addEdgeDemand(Edge(pu, pv), -1);
+    return ans;
+  }
   std::vector<Edge> run(const Net *net) {
     static Point dir[] = {Point(0, 1), Point(0, -1), Point(1, 0), Point(-1, 0)};
     std::fill(dist.begin(), dist.end(), 0x3f3f3f3f);
@@ -32,8 +38,8 @@ class SPFA : public RouterBase {
         if (!globalGrid->inRange(pv))
           continue;
         int v = globalGrid->toIndex(pv);
-        if (dist[v] > dist[u] + 1) {
-          dist[v] = dist[u] + 1;
+        if (dist[v] > dist[u] + 1 + overflowCost(pu, pv) * 10) {
+          dist[v] = dist[u] + 1 + overflowCost(pu, pv) * 10;
           pa[v] = u;
           if (!inQueue[v]) {
             q.emplace(v);
