@@ -11,11 +11,15 @@ struct Point {
   bool operator<(const Point &b) const {
     return h < b.h || (h == b.h && v < b.v);
   }
+  bool operator!=(const Point &b) const { return h != b.h || v != b.v; }
   Point operator+(const Point &b) const { return Point(h + b.h, v + b.v); }
 };
 
 struct Edge : public std::pair<Point, Point> {
-  Edge(const Point &a, const Point &b) : std::pair<Point, Point>(a, b) {}
+  Edge(const Point &a, const Point &b) : std::pair<Point, Point>(a, b) {
+    if (second < first)
+      std::swap(first, second);
+  }
   char getDirection() const {
     if (first.v == second.v)
       return 'H';

@@ -23,6 +23,13 @@ public:
     }
     std::cout << GlobalTimer::getDuration<>().count() / 1e9 << '\n';
   }
+  bool operator<(const RouterContext &b) const {
+    int overflowA = overflow();
+    int overflowB = b.overflow();
+    if (overflowA != overflowB)
+      return overflowA < overflowB;
+    return wireLength() < b.wireLength();
+  }
   const GlobalGrid *getGlobalGrid() const { return globalGrid; }
   int overflow(int eid) const { return std::max(-remain(eid), 0); }
   int remain(int eid) const {
@@ -38,6 +45,13 @@ public:
     int ans = 0;
     for (size_t i = 0; i < demand.size(); ++i)
       ans += overflow(i);
+    return ans;
+  }
+  int wireLength() const {
+    int ans = 0;
+    for (const auto &r : routes) {
+      ans += r.second.size();
+    }
     return ans;
   }
   void addRouteDemand(const std::vector<int> &route, int d) {
@@ -61,7 +75,7 @@ public:
   }
   std::vector<int> &getNetRoute(const Net *net) { return routes.at(net); }
   EdgeManager &getEdgeManager() { return edgeManager; }
-  void output(std::string outputPath) {
+  void output(std::string outputPath) const {
     std::ofstream fout(outputPath);
     for (const auto &net : globalGrid->Nets) {
       fout << net->name << ' ' << net->id << '\n';

@@ -77,6 +77,6 @@ public:
       context.addRouteNet(net, netRoute);
     }
   }
-  bool ripup_reroute() override {}
+  bool ripup_reroute() override { return true; }
 };
 }; // namespace Router

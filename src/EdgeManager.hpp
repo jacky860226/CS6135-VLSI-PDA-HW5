@@ -35,12 +35,8 @@ public:
           Point pv = pu + dp;
           if (!globalGrid->inRange(pv))
             continue;
-          auto A = pu;
-          auto B = pv;
-          if (B < A)
-            std::swap(A, B);
           G[globalGrid->toIndex(pu)].emplace_back(globalGrid->toIndex(pv),
-                                                  edge2id[Edge(A, B)]);
+                                                  edge2id[Edge(pu, pv)]);
         }
       }
     }

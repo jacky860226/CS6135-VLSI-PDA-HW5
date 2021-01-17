@@ -11,6 +11,7 @@ class Dijkstra : public RouterBase {
   std::vector<long long> dist;
   std::vector<std::pair<int, int>> pa;
   std::vector<bool> visit;
+  std::mt19937 MT;
 
   static bool cmp(const Net *a, const Net *b) { return a->HPWL() < b->HPWL(); }
   int overflowCost(int eid) {
@@ -62,17 +63,16 @@ class Dijkstra : public RouterBase {
   }
 
 public:
-  Dijkstra(RouterContext &C)
+  Dijkstra(RouterContext &C, size_t seed = 7122)
       : RouterBase(C), dist(globalGrid->GridH * globalGrid->GridV),
         pa(globalGrid->GridH * globalGrid->GridV),
-        visit(globalGrid->GridH * globalGrid->GridV) {}
+        visit(globalGrid->GridH * globalGrid->GridV), MT(seed) {}
   void route() override {
     std::vector<const Net *> nets;
     nets.reserve(globalGrid->Nets.size());
     for (auto &net : globalGrid->Nets) {
       nets.emplace_back(net.get());
     }
-    std::mt19937 MT(2);
     std::shuffle(nets.begin(), nets.end(), MT);
     std::sort(nets.begin(), nets.end(), cmp);
     for (auto net : nets) {
@@ -88,11 +88,11 @@ public:
     for (int eid = 0; eid < edgeSize; ++eid) {
       if (context.overflow(eid)) {
         overflowEdges.emplace_back(eid);
-        break;
       }
     }
     if (overflowEdges.empty())
       return true;
+    std::shuffle(overflowEdges.begin(), overflowEdges.end(), MT);
     for (auto eid : overflowEdges) {
       auto &overflowNets = context.getRouteNet(eid);
       std::vector<const Net *> overflowNetsV(overflowNets.begin(),
